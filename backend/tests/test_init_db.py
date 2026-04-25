@@ -8,6 +8,11 @@ def test_redact_url_removes_credentials():
     assert redacted == "redis://example.com:6379/0"
 
 
+def test_redact_url_handles_missing_host():
+    assert _redact_url("/path") == "://unknown-host/path"
+    assert _redact_url("") == "://unknown-host"
+
+
 @patch("litigation_api.scripts.init_db.init_schema")
 @patch("litigation_api.scripts.init_db.FalkorDB")
 def test_main_passes_configured_graph_name(mock_falkordb, mock_init_schema):
