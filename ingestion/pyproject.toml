@@ -1,3 +1,11 @@
 [project]
 name="ingestion"
 version="0.1.0"
+dependencies = [
+    "pydantic>=2.13.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
