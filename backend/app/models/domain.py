@@ -1,47 +1,63 @@
-from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional, List, Dict, Any
-from datetime import date
+from typing import List, Optional
 
-class Chunk(BaseModel):
-    """
-    Represents a chunk of text parsed from a Document for vectorizing.
-    """
-    id: str = Field(..., description="Unique identifier for the chunk")
-    document_id: str = Field(..., description="ID of the parent Document")
-    text: str = Field(..., description="The chunk text")
-    page_number: Optional[int] = Field(None, description="Page number where this chunk is located")
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
-class Document(BaseModel):
-    """
-    Represents a legal document (e.g., Complaint, Opinion/Order, Settlement).
-    Maps from the CRLCA Document object.
-    """
-    id: int = Field(..., description="Unique identifier for the document")
-    title: str = Field(..., description="Human-readable name for the document")
-    file: HttpUrl = Field(..., description="URL to the actual PDF file for download")
-    document_type: str = Field(..., description="The category of the document")
-    date: Optional[str] = Field(None, description="Date the document was filed/signed")
-    ecf_number: Optional[str] = Field(None, description="PACER/ECF number for the document")
-    chunks: List[Chunk] = Field(default_factory=list, description="Text chunks associated with the document")
 
-class DocketEntry(BaseModel):
-    """
-    Represents a docket entry. Maps from the CRLCA Docket or main_docket object.
-    """
-    id: int = Field(..., description="Unique docket identifier")
-    docket_number_manual: Optional[str] = Field(None, description="The actual court docket number")
-    date_filed: Optional[str] = Field(None, description="Filing date")
+class Tier1Model(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-class Case(BaseModel):
-    """
-    Represents a court case. Maps from the CRLCA Case object.
-    """
-    id: int = Field(..., description="The unique source identifier for the case")
-    name: str = Field(..., description="The title/name of the case")
-    court: str = Field(..., description="The court where the case was filed")
-    docket_status: Optional[str] = Field(None, description="Status of the case docket")
-    case_status: Optional[str] = Field(None, description="CRLCA internal status of the case metadata")
-    filing_date: Optional[str] = Field(None, description="Date the case was filed (YYYY-MM-DD)")
-    summary: Optional[str] = Field(None, description="Summary description of the case")
-    docket_entries: List[DocketEntry] = Field(default_factory=list, description="Docket entries associated with the case")
-    documents: List[Document] = Field(default_factory=list, description="Documents associated with the case")
+
+class Chunk(Tier1Model):
+    """Tier 1 graph-backed chunk entity."""
+
+    chunk_id: str = Field(..., description="Durable chunk identifier")
+    doc_id: str = Field(..., description="ID of the parent document")
+    case_id: str = Field(..., description="ID of the owning case")
+    chunk_index: int = Field(..., description="Chunk order within the document")
+    page_start: Optional[int] = Field(None, description="First page covered by the chunk")
+    page_end: Optional[int] = Field(None, description="Last page covered by the chunk")
+    text: str = Field(..., description="Chunk text")
+    embedding: Optional[List[float]] = Field(
+        None, description="Vector embedding for semantic retrieval"
+    )
+
+
+class Document(Tier1Model):
+    """Tier 1 document entity aligned to the graph schema."""
+
+    doc_id: str = Field(..., description="Durable document identifier")
+    case_id: str = Field(..., description="ID of the owning case")
+    entry_id: str = Field(..., description="ID of the related docket entry")
+    document_type: str = Field(..., description="Normalized document class")
+    title: str = Field(..., description="Human-readable document title")
+    filed_at: Optional[str] = Field(None, description="Filing date or timestamp")
+    author_type: Optional[str] = Field(None, description="Normalized author classification")
+    disposition: Optional[str] = Field(None, description="Disposition captured for the filing")
+    summary: Optional[str] = Field(None, description="Document-level summary")
+    summary_embedding: Optional[List[float]] = Field(
+        None, description="Embedding derived from the document summary"
+    )
+
+
+class DocketEntry(Tier1Model):
+    """Tier 1 docket entry entity aligned to the graph schema."""
+
+    entry_id: str = Field(..., description="Durable docket entry identifier")
+    case_id: str = Field(..., description="ID of the owning case")
+    docket_number: Optional[str] = Field(None, description="Court-assigned docket number")
+    filed_at: Optional[str] = Field(None, description="Date or timestamp filed")
+    title: str = Field(..., description="Entry title")
+    entry_type: Optional[str] = Field(None, description="Normalized entry classification")
+    source_url: Optional[HttpUrl] = Field(None, description="Canonical source URL")
+
+
+class Case(Tier1Model):
+    """Tier 1 case entity aligned to the graph schema."""
+
+    case_id: str = Field(..., description="Durable case identifier")
+    case_name: str = Field(..., description="Case caption")
+    court: str = Field(..., description="Court where the case was filed")
+    jurisdiction: str = Field(..., description="Jurisdiction of the case")
+    filed_date: Optional[str] = Field(None, description="Date the case was filed")
+    closed_date: Optional[str] = Field(None, description="Date the case was closed")
+    status: Optional[str] = Field(None, description="Current lifecycle status")
