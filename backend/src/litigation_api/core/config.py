@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_name: str = "case-shift-backend"
     environment: Literal["development", "production", "testing"] = "development"
     debug: bool = True
+    cors_origins: list[str] = ["http://localhost:3000"]
 
     # Optional URL configurations with defaults
     redis_url: str = "redis://localhost:6379/0"
