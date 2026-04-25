@@ -1,5 +1,5 @@
-from typing import Optional, Union, Any
-from pydantic import BaseModel, Field
+from typing import Optional, Union
+from pydantic import BaseModel
 
 class CRLCADocument(BaseModel):
     id: int
