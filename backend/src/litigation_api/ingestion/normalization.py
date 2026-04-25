@@ -5,6 +5,10 @@ from datetime import datetime
 from ..models.domain import Case, DocketEntry, Document
 from .crlca_models import CRLCACase, CRLCADocket, CRLCADocument
 
+# Pre-compiled regular expressions for date parsing
+ISO_DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+US_DATE_RE = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4})")
+
 def normalize_date(date_str: Optional[str]) -> Optional[str]:
     """Parse and normalize a date string into YYYY-MM-DD format."""
     if not date_str:
@@ -18,12 +22,12 @@ def normalize_date(date_str: Optional[str]) -> Optional[str]:
         pass
 
     # Attempt simple regex match for YYYY-MM-DD
-    match = re.search(r"(\d{4})-(\d{2})-(\d{2})", date_str)
+    match = ISO_DATE_RE.search(date_str)
     if match:
         return f"{match.group(1)}-{match.group(2)}-{match.group(3)}"
 
     # Attempt regex match for MM/DD/YYYY
-    match_us = re.search(r"(\d{1,2})/(\d{1,2})/(\d{4})", date_str)
+    match_us = US_DATE_RE.search(date_str)
     if match_us:
         # Zero-pad month and day
         month = str(int(match_us.group(1))).zfill(2)
