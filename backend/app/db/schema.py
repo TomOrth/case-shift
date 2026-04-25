@@ -22,6 +22,8 @@ def init_schema(client: FalkorDB, graph_name: str = "case_shift"):
         ("EventType", "event_type_id"), # For EventType nodes
     ]
 
+    failures = []
+
     for label, property_name in indexes:
         try:
             query = f"CREATE INDEX FOR (n:{label}) ON (n.{property_name})"
@@ -33,5 +35,9 @@ def init_schema(client: FalkorDB, graph_name: str = "case_shift"):
                 logger.debug(f"Index on {label}({property_name}) already exists.")
             else:
                 logger.warning(f"Error creating index on {label}({property_name}): {e}")
+                failures.append(e)
+
+    if failures:
+        raise RuntimeError(f"Failed to create {len(failures)} index(es). First error: {failures[0]}")
 
     logger.info("Schema initialization complete.")
