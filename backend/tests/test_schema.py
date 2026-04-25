@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.db.schema import init_schema
+from litigation_api.db.schema import init_schema
 
 
 def test_init_schema_creates_indexes():

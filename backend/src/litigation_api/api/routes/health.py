@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from app.models.api import HealthResponse
+
+from litigation_api.models.api import HealthResponse
 
 router = APIRouter()
 

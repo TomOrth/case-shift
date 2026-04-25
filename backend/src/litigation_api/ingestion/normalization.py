@@ -2,7 +2,7 @@ import re
 from typing import Optional, Union
 from datetime import datetime
 
-from backend.app.models.domain import Case, DocketEntry, Document
+from ..models.domain import Case, DocketEntry, Document
 from .crlca_models import CRLCACase, CRLCADocket, CRLCADocument
 
 def normalize_date(date_str: Optional[str]) -> Optional[str]:

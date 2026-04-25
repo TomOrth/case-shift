@@ -4,8 +4,8 @@ from urllib.parse import urlsplit
 
 from falkordb import FalkorDB
 
-from app.core.config import settings
-from app.db.schema import init_schema
+from litigation_api.core.config import settings
+from litigation_api.db.schema import init_schema
 
 # Configure basic logging for the script
 logging.basicConfig(level=logging.INFO)

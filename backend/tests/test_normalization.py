@@ -1,8 +1,8 @@
 from typing import Optional
 from pydantic import HttpUrl
 
-from ingestion.crlca_models import CRLCACase, CRLCADocket, CRLCADocument
-from ingestion.normalization import normalize_date, normalize_case, normalize_docket_entry, normalize_document
+from litigation_api.ingestion.crlca_models import CRLCACase, CRLCADocket, CRLCADocument
+from litigation_api.ingestion.normalization import normalize_date, normalize_case, normalize_docket_entry, normalize_document
 
 def test_normalize_date():
     assert normalize_date(None) is None

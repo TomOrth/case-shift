@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from app.models.domain import Case, Document, DocketEntry, Chunk
+from litigation_api.models.domain import Case, Document, DocketEntry, Chunk
 
 def test_chunk_model():
     chunk = Chunk(

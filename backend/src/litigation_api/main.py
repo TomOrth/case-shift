@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from app.core.config import settings
-from app.api.routes import health
+
+from litigation_api.api.routes import health
+from litigation_api.core.config import settings
 
 def create_app() -> FastAPI:
     app = FastAPI(
