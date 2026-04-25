@@ -11,7 +11,15 @@ For the v1 launch, the sole supported source for ingestion is the **Civil Rights
 
 ## 2. Ingestion Input Contract
 
-The ingestion pipeline will map incoming CRLCA JSON objects to our internal representations. To ensure idempotent ingestion and stable references, the following fields are required or optional.
+The ingestion pipeline will map incoming CRLCA JSON objects to our internal representations. To ensure idempotent ingestion and stable references, the CRLCA response shape must be treated as a source-layer contract, not as the shared application model.
+
+For v1, ingestion should be structured in three layers:
+
+1.  **CRLCA source models:** Raw fields that mirror the upstream API.
+2.  **Normalization layer:** Mapping logic that converts CRLCA objects into Tier 1 project fields.
+3.  **Canonical domain models:** Internal models aligned to the Tier 1 spec and shared across backend, worker, and graph write paths.
+
+This means the field names in this document describe the CRLCA source payload and its mapping responsibilities. They should not replace the canonical Tier 1 names in the shared domain model layer.
 
 ### 2.1. Case Mapping
 Maps from the CRLCA `Case` object.
@@ -27,6 +35,15 @@ Maps from the CRLCA `Case` object.
 *   `filing_date` (string): Date the case was filed (YYYY-MM-DD).
 *   `summary` (string): Summary description of the case.
 
+**Canonical Tier 1 output:**
+*   `case_id`
+*   `case_name`
+*   `court`
+*   `jurisdiction`
+*   `filed_date`
+*   `closed_date`
+*   `status`
+
 ### 2.2. Docket Mapping
 Maps from the CRLCA `Docket` or `main_docket` object nested inside a Case.
 
@@ -36,6 +53,15 @@ Maps from the CRLCA `Docket` or `main_docket` object nested inside a Case.
 
 **Optional Fields:**
 *   `date_filed` (string): Filing date.
+
+**Canonical Tier 1 output:**
+*   `entry_id`
+*   `case_id`
+*   `docket_number`
+*   `filed_at`
+*   `title`
+*   `entry_type`
+*   `source_url`
 
 ### 2.3. Document Mapping
 Maps from the CRLCA `Document` object.
@@ -49,6 +75,28 @@ Maps from the CRLCA `Document` object.
 **Optional Fields:**
 *   `date` (string): Date the document was filed/signed.
 *   `ecf_number` (string): PACER/ECF number for the document.
+
+**Canonical Tier 1 output:**
+*   `doc_id`
+*   `case_id`
+*   `entry_id`
+*   `document_type`
+*   `title`
+*   `filed_at`
+*   `author_type`
+*   `disposition`
+*   `summary`
+*   `summary_embedding`
+
+## 2.4. Implementation Guidance
+
+When implementing ingestion code, use a source-specific module for CRLCA payloads and keep it separate from shared application models. A recommended shape is:
+
+*   `ingestion/crlca_models.py`: raw CRLCA response models
+*   `ingestion/normalization.py`: mapping from CRLCA models to Tier 1 domain models
+*   `backend/app/models/domain.py`: canonical Tier 1 entities only
+
+This prevents upstream field names from leaking into the graph schema, API contracts, or later non-CRLCA ingestion sources.
 
 ## 3. Supported Document Taxonomy (Tier 1)
 

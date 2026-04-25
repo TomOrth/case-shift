@@ -43,3 +43,30 @@ case-shift/
 ├── ingestion/    # Data fetching and scraping pipelines
 └── docs/         # Architecture and project documentation
 ```
+
+## 6. Model Layer Boundaries
+
+To avoid coupling the whole system to a single upstream API, v1 will keep source-specific models separate from the canonical Tier 1 contract.
+
+### 6.1. Canonical Domain Models
+The shared models used by the backend, worker, and graph-writing code must match the Tier 1 spec exactly. These are the internal contract for the system and should use the project field names such as:
+
+*   `case_id`, `case_name`
+*   `entry_id`, `docket_number`
+*   `doc_id`, `filed_at`
+*   `chunk_id`, `chunk_index`, `page_start`, `page_end`
+
+These models belong in the shared domain layer and should not contain CRLCA-specific field names like `name`, `file`, `date`, `docket_status`, or `docket_number_manual`.
+
+### 6.2. Source-Specific Models
+Any raw fields that come from the Civil Rights Litigation Clearinghouse API should live in ingestion-layer source models such as `crlca_models.py` or a similar source-specific module. Those models are allowed to mirror the upstream API exactly so ingestion can parse responses without losing fidelity.
+
+### 6.3. Normalization Layer
+Normalization code should map source-specific models into the canonical Tier 1 domain models before data reaches the backend service layer, graph repositories, or API response shaping.
+
+The intended flow is:
+
+`CRLCA payload -> source model -> normalization -> Tier 1 domain model -> graph/API`
+
+### 6.4. Preserving Source Metadata
+If we need upstream-only fields for idempotency, provenance, or debugging, preserve them explicitly in source adapters or a narrow provenance structure. Do not expand the canonical Tier 1 models with CRLCA-only fields unless the project spec adopts them as stable cross-source concepts.
