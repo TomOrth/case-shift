@@ -2,6 +2,7 @@
 name="ingestion"
 version="0.1.0"
 dependencies = [
+    "backend",
     "pydantic>=2.13.3",
 ]
 
@@ -9,3 +10,6 @@ dependencies = [
 dev = [
     "pytest>=9.0.3",
 ]
+
+[tool.uv.sources]
+backend = { workspace = true }

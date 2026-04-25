@@ -43,7 +43,7 @@ wheels = [
 [[package]]
 name = "backend"
 version = "0.1.0"
-source = { virtual = "backend" }
+source = { editable = "backend" }
 dependencies = [
     { name = "fastapi" },
     { name = "pydantic" },
@@ -168,6 +168,7 @@ name = "ingestion"
 version = "0.1.0"
 source = { virtual = "ingestion" }
 dependencies = [
+    { name = "backend" },
     { name = "pydantic" },
 ]
 
@@ -177,7 +178,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pydantic", specifier = ">=2.13.3" }]
+requires-dist = [
+    { name = "backend", editable = "backend" },
+    { name = "pydantic", specifier = ">=2.13.3" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.0.3" }]
