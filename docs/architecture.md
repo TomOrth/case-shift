@@ -7,7 +7,7 @@ The application is divided into four main domains to ensure separation of concer
 *   **Frontend**: Next.js application responsible for the user interface, routing, and client-side rendering. It interacts exclusively with the Backend API and does not directly access databases or blob storage.
 *   **Backend**: FastAPI application serving as the core API layer. It manages business logic, user authentication, and provides endpoints for the frontend. It is the primary interface to the FalkorDB graph database and the task queue.
 *   **Worker**: Asynchronous background job processor. Handles computationally heavy or long-running tasks such as parsing court documents, performing OCR, running LLM extraction jobs, vectorizing text using the **Kanon 2 Embedder** (the best-in-class legal embedding model), and complex graph updates.
-*   **Ingestion**: Dedicated pipeline for fetching external data (e.g., court APIs, scrapers). It downloads raw documents, performs initial sanitization, and queues processing tasks for the Worker.
+*   **Ingestion**: Dedicated pipeline for fetching external data (e.g., court APIs, scrapers). Specifically, it will integrate with the Civil Rights Litigation Clearinghouse API (CRLCA - `https://api.clearinghouse.net/`) to fetch civil rights litigation information and documents. It downloads raw documents, performs initial sanitization, and queues processing tasks for the Worker.
 
 ## 2. Worker Framework Decision
 
