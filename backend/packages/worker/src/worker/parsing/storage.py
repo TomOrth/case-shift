@@ -30,6 +30,8 @@ class ArtifactStorage:
             payload = response['Body'].read().decode('utf-8')
             return ParsedArtifact.model_validate_json(payload)
         except ClientError as e:
-            if e.response['Error']['Code'] == 'NoSuchKey':
+            error_code = e.response.get('Error', {}).get('Code')
+            status_code = e.response.get('ResponseMetadata', {}).get('HTTPStatusCode')
+            if error_code == 'NoSuchKey' or status_code == 404:
                 return None
-            raise e
+            raise
