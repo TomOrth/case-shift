@@ -1,4 +1,5 @@
 import logging
+import sys
 from falkordb import FalkorDB
 from app.core.config import settings
 from app.db.schema import init_schema
@@ -18,8 +19,9 @@ def main():
         client = FalkorDB.from_url(settings.falkordb_url)
         init_schema(client)
         logger.info("Successfully initialized FalkorDB schema.")
-    except Exception as e:
-        logger.error(f"Failed to initialize schema: {e}")
+    except Exception:
+        logger.exception("Failed to initialize schema")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
