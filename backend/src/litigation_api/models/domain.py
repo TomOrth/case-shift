@@ -37,6 +37,7 @@ class Document(Tier1Model):
     summary_embedding: Optional[List[float]] = Field(
         None, description="Embedding derived from the document summary"
     )
+    status: Optional[str] = Field(None, description="Ingestion status")
 
 
 class DocketEntry(Tier1Model):

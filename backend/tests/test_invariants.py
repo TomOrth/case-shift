@@ -42,6 +42,7 @@ def test_tier1_domain_model_fields_are_spec_aligned():
         "disposition",
         "summary",
         "summary_embedding",
+        "status",
     }
     assert set(Chunk.model_fields) == {
         "chunk_id",
