@@ -4,6 +4,7 @@ from datetime import datetime
 
 from ..models.domain import Case, DocketEntry, Document
 from .crlca_models import CRLCACase, CRLCADocket, CRLCADocument
+from .classification import classify_document
 
 # Pre-compiled regular expressions for date parsing
 ISO_DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
@@ -83,9 +84,12 @@ def normalize_document(source: CRLCADocument, case_id: str, entry_id: str) -> Do
     doc_id = f"crlca_doc_{source.id}"
 
     title = source.title or source.description or f"Document {source.id}"
-    doc_type = source.document_type
-    if not doc_type:
-        doc_type = "Unknown"
+    doc_type = classify_document(
+        document_type=source.document_type,
+        title=title,
+        docket_title=None, # In the CRLCA document mapping, docket_title isn't explicitly brought down here unless passed differently
+        text_content=source.description
+    )
 
     return Document(
         doc_id=doc_id,
