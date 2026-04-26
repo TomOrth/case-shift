@@ -1,5 +1,3 @@
-from typing import Optional
-from pydantic import HttpUrl
 
 from litigation_api.ingestion.crlca_models import CRLCACase, CRLCADocket, CRLCADocument
 from litigation_api.ingestion.normalization import normalize_date, normalize_case, normalize_docket_entry, normalize_document

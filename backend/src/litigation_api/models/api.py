@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Generic, TypeVar, Optional
 
-from litigation_api.models.domain import Case, Document, DocketEntry
+from litigation_api.models.domain import Case, Document
 
 T = TypeVar("T")
 

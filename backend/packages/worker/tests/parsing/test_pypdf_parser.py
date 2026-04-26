@@ -1,8 +1,5 @@
 import pytest
-import os
-import pypdf
 from reportlab.pdfgen import canvas
-from io import BytesIO
 from worker.parsing.parser import PyPDFParser
 
 def create_pdf(file_path, pages_text):

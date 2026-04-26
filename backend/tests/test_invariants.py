@@ -21,6 +21,7 @@ def test_tier1_domain_model_fields_are_spec_aligned():
         "filed_date",
         "closed_date",
         "status",
+
     }
     assert set(DocketEntry.model_fields) == {
         "entry_id",
@@ -35,6 +36,7 @@ def test_tier1_domain_model_fields_are_spec_aligned():
         "doc_id",
         "case_id",
         "entry_id",
+        "ingestion_status",
         "document_type",
         "title",
         "filed_at",
@@ -42,6 +44,7 @@ def test_tier1_domain_model_fields_are_spec_aligned():
         "disposition",
         "summary",
         "summary_embedding",
+
     }
     assert set(Chunk.model_fields) == {
         "chunk_id",

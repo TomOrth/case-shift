@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Union
+from typing import Optional
 from datetime import datetime
 
 from ..models.domain import Case, DocketEntry, Document

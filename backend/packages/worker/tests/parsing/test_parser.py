@@ -1,5 +1,3 @@
-import pytest
-import os
 from worker.parsing.parser import DummyPDFParser
 
 def test_parser_with_content(tmp_path):

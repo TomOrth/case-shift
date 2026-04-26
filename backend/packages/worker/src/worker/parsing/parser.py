@@ -1,4 +1,4 @@
-from typing import Protocol, List
+from typing import Protocol
 import pypdf
 from .models import ParsedArtifact, ParsedPage
 
