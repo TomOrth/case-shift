@@ -4,7 +4,6 @@ import boto3
 from typing import Optional, Tuple, List
 from botocore.exceptions import ClientError
 
-from ..core.config import settings
 from ..models.domain import Case, DocketEntry, Document
 from .crlca_models import CRLCACase, CRLCADocket, CRLCADocument
 from .normalization import normalize_case, normalize_docket_entry, normalize_document
@@ -82,20 +81,10 @@ class IngestionPipeline:
             async for raw_document_dict in active_client.fetch_case_documents(case_id):
                 raw_document = CRLCADocument(**raw_document_dict)
 
-                if not domain_dockets:
-                    domain_dockets.append(
-                        DocketEntry(
-                            entry_id=f"crlca_docket_unknown_{case_id}",
-                            case_id=domain_case.case_id,
-                            docket_number=None,
-                            filed_at=domain_case.filed_date,
-                            title=f"Synthetic docket entry for case {case_id}",
-                            entry_type="synthetic_case_document_anchor",
-                            source_url=None,
-                        )
-                    )
-
-                entry_id = domain_dockets[0].entry_id
+                # Documents need a reference to a docket entry.
+                # In CRLCA v2.1 API, we usually just associate documents to the main case/docket,
+                # but if we don't have a specific docket link, we use the first docket or a dummy one.
+                entry_id = domain_dockets[0].entry_id if domain_dockets else f"crlca_docket_unknown_{case_id}"
 
                 domain_doc = normalize_document(raw_document, domain_case.case_id, entry_id)
 
@@ -126,11 +115,16 @@ class IngestionPipeline:
             return domain_case, domain_dockets, domain_documents
 
         if self.client:
-            return await _do_work(self.client)
+            opened_client = False
+            # If the client wasn't opened (e.g. self.client._client is None)
+            if self.client._client is None:
+                await self.client.__aenter__()
+                opened_client = True
+            try:
+                return await _do_work(self.client)
+            finally:
+                if opened_client:
+                    await self.client.__aexit__(None, None, None)
         else:
-            async with CRLCAClient(
-                base_url=settings.crlca_base_url,
-                timeout=settings.crlca_timeout_seconds,
-                token=settings.crlca_token,
-            ) as client:
+            async with CRLCAClient() as client:
                 return await _do_work(client)

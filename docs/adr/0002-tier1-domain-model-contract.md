@@ -18,25 +18,11 @@ Examples of canonical field names:
 - `Document`: `doc_id`, `case_id`, `entry_id`, `document_type`, `title`, `filed_at`, `author_type`, `disposition`, `summary`, `summary_embedding`
 - `Chunk`: `chunk_id`, `doc_id`, `case_id`, `chunk_index`, `page_start`, `page_end`, `text`, `embedding`
 
-### Accepted v1 Exception
-
-`Document.ingestion_status` is an allowed extension to the canonical document model for v1.
-
-This field is permitted because it captures pipeline lifecycle state that is useful across ingestion, retries, artifact handling, and downstream operational reporting. It is not intended to mirror a CRLCA-native field. It should remain constrained to source-acquisition and artifact-ingestion outcomes such as:
-
-- `INGESTED`
-- `SKIPPED_UNSUPPORTED_TYPE`
-- `FAILED_DOWNLOAD`
-- `FAILED_UPLOAD`
-
-No other CRLCA-specific fields should be added to the canonical domain models without an explicit ADR update.
-
 ## Consequences
 
 - CRLCA-specific field names should not appear in canonical domain models.
 - Upstream source payloads must be normalized into the canonical Tier 1 shape before reaching graph-write or API layers.
 - Future ingestion sources should map into the same contract rather than reshaping the backend around the source.
-- Tools may use `Document.ingestion_status` for ingest lifecycle reporting, but should not treat it as permission to add additional source-specific metadata to shared models.
 
 ## Guidance for Tools
 
