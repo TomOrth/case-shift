@@ -1,19 +1,38 @@
 import logging
 import httpx
 from typing import AsyncGenerator, Dict, Any, Optional
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 
 logger = logging.getLogger(__name__)
 
 class CRLCAClientError(Exception):
     """Base exception for CRLCA client errors."""
-    pass
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+def _is_retriable_error(e: BaseException) -> bool:
+    if isinstance(e, httpx.RequestError):
+        return True
+
+    status_code = None
+    if isinstance(e, httpx.HTTPStatusError):
+        status_code = e.response.status_code
+    elif isinstance(e, CRLCAClientError):
+        status_code = e.status_code
+
+    if status_code in {408, 429, 500, 502, 503, 504}:
+        return True
+
+    return False
 
 class CRLCAClient:
-    def __init__(self, base_url: str = "https://api.clearinghouse.net/api/v2p1/", timeout: float = 30.0):
+    def __init__(self, base_url: str = "https://api.clearinghouse.net/api/v2p1/", timeout: float = 30.0, token: Optional[str] = None):
         self.base_url = base_url
         self.timeout = timeout
         self.headers = {"User-Agent": "Case-Shift-Ingestion/1.0"}
+        if token:
+            self.headers["Authorization"] = f"Token {token}"
         self._client = None
 
     async def __aenter__(self):
@@ -38,7 +57,7 @@ class CRLCAClient:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError, CRLCAClientError)),
+        retry=retry_if_exception(_is_retriable_error),
         reraise=True
     )
     async def _fetch_url(self, url: str) -> Dict[str, Any]:
@@ -49,7 +68,7 @@ class CRLCAClient:
             return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error fetching {url}: {e.response.status_code}")
-            raise CRLCAClientError(f"HTTP error fetching {url}: {e}") from e
+            raise CRLCAClientError(f"HTTP error fetching {url}: {e}", status_code=e.response.status_code) from e
         except httpx.RequestError as e:
             logger.error(f"Request error fetching {url}: {e}")
             raise CRLCAClientError(f"Request error fetching {url}: {e}") from e
@@ -92,7 +111,7 @@ class CRLCAClient:
         @retry(
             stop=stop_after_attempt(3),
             wait=wait_exponential(multiplier=1, min=2, max=10),
-            retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError, CRLCAClientError)),
+            retry=retry_if_exception(_is_retriable_error),
             reraise=True
         )
         async def _download() -> bytes:
@@ -102,7 +121,7 @@ class CRLCAClient:
                 response.raise_for_status()
                 return response.read()
             except httpx.HTTPStatusError as e:
-                raise CRLCAClientError(f"HTTP error downloading {url}: {e}") from e
+                raise CRLCAClientError(f"HTTP error downloading {url}: {e}", status_code=e.response.status_code) from e
             except httpx.RequestError as e:
                 raise CRLCAClientError(f"Request error downloading {url}: {e}") from e
 

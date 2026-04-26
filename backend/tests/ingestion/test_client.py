@@ -3,7 +3,7 @@ import httpx
 from unittest.mock import AsyncMock, patch
 import pytest_asyncio
 
-from litigation_api.ingestion.client import CRLCAClient, CRLCAClientError
+from litigation_api.ingestion.client import CRLCAClient
 
 @pytest_asyncio.fixture
 async def client():
@@ -69,7 +69,7 @@ async def test_download_file(client):
 @pytest.mark.asyncio
 async def test_fetch_url_retry_logic(client):
     class MockErrorResponse:
-        status_code = 500
+        status_code = 502
 
     class MockSuccessResponse:
         def raise_for_status(self):

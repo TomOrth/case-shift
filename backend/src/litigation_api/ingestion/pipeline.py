@@ -19,19 +19,30 @@ class IngestionPipeline:
         self.s3_bucket_name = s3_bucket_name
         self.client = client
         self.s3_client = boto3.client("s3", endpoint_url=self.s3_endpoint_url)
-        self._ensure_bucket()
 
-    def _ensure_bucket(self):
-        """Ensure the target S3 bucket exists."""
+    def _ensure_bucket_sync(self):
+        """Ensure the target S3 bucket exists (synchronous)."""
         try:
             self.s3_client.head_bucket(Bucket=self.s3_bucket_name)
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code")
-            if error_code == "404":
-                logger.info(f"Bucket {self.s3_bucket_name} not found. Creating it.")
-                self.s3_client.create_bucket(Bucket=self.s3_bucket_name)
+            # Handle "404", "403" and "NoSuchBucket" as absent bucket indications
+            if error_code in ("404", "403", "NoSuchBucket"):
+                logger.info(f"Bucket {self.s3_bucket_name} not found or inaccessible. Creating it.")
+                try:
+                    self.s3_client.create_bucket(Bucket=self.s3_bucket_name)
+                except ClientError as ce:
+                    ce_code = ce.response.get("Error", {}).get("Code")
+                    if ce_code == "BucketAlreadyOwnedByYou":
+                        pass # Ignore if we already own it
+                    else:
+                        raise
             else:
                 raise
+
+    async def _ensure_bucket_async(self):
+        """Asynchronously ensure the target S3 bucket exists."""
+        await asyncio.to_thread(self._ensure_bucket_sync)
 
     def _upload_raw_artifact(self, doc_id: str, content: bytes) -> str:
         """Upload raw document content to S3-compatible storage and return object key.
@@ -49,6 +60,8 @@ class IngestionPipeline:
 
     async def fetch_and_normalize_case(self, case_id: int) -> Tuple[Case, List[DocketEntry], List[Document]]:
         """Fetch a single case, its dockets and documents, and normalize them."""
+
+        await self._ensure_bucket_async()
 
         # We need to ensure self.client is initialized and has an active context
         async def _do_work(active_client: CRLCAClient) -> Tuple[Case, List[DocketEntry], List[Document]]:
@@ -80,16 +93,22 @@ class IngestionPipeline:
                     logger.info(f"Downloading supported document: {domain_doc.doc_id}")
                     try:
                         file_content = await active_client.download_file(raw_document.file)
+                    except Exception as e:
+                        logger.error(f"Failed to download file for document {domain_doc.doc_id}: {e}")
+                        domain_doc.ingestion_status = "FAILED_DOWNLOAD"
+                        domain_documents.append(domain_doc)
+                        continue
+
+                    try:
                         # Run the blocking S3 upload in a separate thread
                         await asyncio.to_thread(self._upload_raw_artifact, domain_doc.doc_id, file_content)
+                        domain_doc.ingestion_status = "INGESTED"
                     except Exception as e:
-                        logger.error(f"Failed to download or upload file for document {domain_doc.doc_id}: {e}")
-                        # Even if download fails, we shouldn't silently corrupt ingest state.
-                        # We log the error. Depending on strictness, we could raise.
-                        raise
+                        logger.error(f"Failed to upload file for document {domain_doc.doc_id}: {e}")
+                        domain_doc.ingestion_status = "FAILED_UPLOAD"
                 else:
                     logger.info(f"Skipping download for unsupported document type or missing file URL: {domain_doc.doc_id} ({domain_doc.document_type})")
-                    domain_doc.status = "SKIPPED_UNSUPPORTED_TYPE" # Adhere to unsupported document fallback behavior
+                    domain_doc.ingestion_status = "SKIPPED_UNSUPPORTED_TYPE" # Adhere to unsupported document fallback behavior
 
                 domain_documents.append(domain_doc)
 
