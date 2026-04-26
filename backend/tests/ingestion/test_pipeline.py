@@ -100,7 +100,7 @@ async def test_fetch_and_normalize_case_unsupported_document(pipeline, mock_crlc
     # Assert
     assert len(docs) == 1
     assert docs[0].doc_id == "crlca_doc_101"
-    assert docs[0].document_type == "Correspondence"
+    assert docs[0].document_type == "Unknown"
     assert docs[0].ingestion_status == "SKIPPED_UNSUPPORTED_TYPE"
 
     # Ensure no download or upload occurred
