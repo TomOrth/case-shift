@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # FalkorDB does not use a DB index in the URL
     falkordb_url: str = "redis://localhost:6379"
     falkordb_graph_name: str = "case_shift"
+    crlca_base_url: str = "https://api.clearinghouse.net/api/v2p1/"
+    crlca_token: str | None = None
+    crlca_timeout_seconds: float = 30.0
     s3_endpoint_url: str = "http://localhost:4566"
     s3_bucket_name: str = "case-shift-artifacts"
 
