@@ -28,6 +28,13 @@ def test_heuristics_docket_title():
     classifier = DocumentClassifier()
     assert classifier.classify(docket_title="Notice of Settlement") == "Settlement"
 
+def test_heuristic_priority():
+    classifier = DocumentClassifier()
+    assert classifier.classify(title="Order Denying Motion to Amend Complaint") == "Opinion/Order"
+    assert classifier.classify(title="Opinion on Motion to Dismiss Complaint") == "Opinion/Order"
+    assert classifier.classify(title="Ruling on Plaintiff's Complaint") == "Opinion/Order"
+    assert classifier.classify(title="Stipulation to Dismiss Complaint") == "Settlement"
+
 def test_fallback_provider():
     classifier = DocumentClassifier(fallback_provider=MockFallbackProvider())
     assert classifier.classify(text_content="This is a secret model settlement.") == "Settlement"
