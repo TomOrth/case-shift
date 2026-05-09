@@ -27,12 +27,12 @@ class DocumentClassifier:
 
         # 2. Heuristics on available fields
         def _apply_heuristics(text: str) -> Optional[str]:
-            if self.complaint_re.search(text):
-                return "Complaint"
-            if self.settlement_re.search(text):
-                return "Settlement"
             if self.opinion_order_re.search(text):
                 return "Opinion/Order"
+            if self.settlement_re.search(text):
+                return "Settlement"
+            if self.complaint_re.search(text):
+                return "Complaint"
             return None
 
         if document_type:
